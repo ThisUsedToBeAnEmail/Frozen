@@ -1,0 +1,56 @@
+Revision history for Frozen
+
+0.09    2026-10-11
+        - Builds on 5.10.0: HeUTF8 and mPUSHs are defined where perl lacks them.
+
+0.08    2026-09-16
+        - a perl before 5.36 sets the public string flag when it stringifies
+          a number, so a stringified 5 carries the flags of a numified "5"
+          and freezes as a string there. Documented as a limitation; the
+          test now expects it on those perls.
+
+0.07    2026-09-16
+        - a scalar's kind is read from the public SV flags, not the private
+          ones. A cached conversion is not a type: 1.5 compared against an
+          integer leaves the truncated 1 in its IV slot, and freeze stored
+          that 1 as an integer. Two freezes of untouched data now agree
+          however the data was read in between.
+        - lossy_nv governs only what a double cannot hold at all: a value
+          past DBL_MAX, or a non-zero one under the smallest denormal.
+          Rounding a wider NV is the format. Without this, every perl built
+          -Duselongdouble refused nearly every NV it was given.
+
+0.06    2026-09-11
+        - documents stringify
+
+0.05    2026-09-11
+        - ABI version 4. freeze and freeze_container take a flags word 
+        - stringify => 1 stores every defined non-reference scalar as its
+          string form. A reader that returns text otherwise has to bridge
+          the gap itself, because JSON's 5 decodes to an IV and freezes as
+          an integer, and str answers NULL for it.
+
+0.04    2026-09-10
+        - ABI version 3, appending three entries: borrow attaches to bytes
+          in place without copying them, for a block the caller owns and
+          that outlives the reader; release is close without an
+          interpreter; verify walks a block and says whether its structure
+          holds together. What borrow saves scales with the block: nothing
+          much at 568 bytes, nearly all of it at three megabytes.
+
+0.03    2026-09-10
+        - ABI version 2, appending three entries: freeze and
+          freeze_container build a block from Perl data through the table
+          rather than through the Perl surface, and val_at reads a hash
+          value by index the way at() already reads an array element.
+        - freeze_container adopts the bytes it just built instead of
+          copying them, so a consumer that freezes at boot pays one
+          allocation where freeze-then-attach paid two.
+
+0.02    2026-09-10
+        - fixes the Windows build: the ABI's own selftest called the table's
+          close member, which XSUB.h redefines as a macro under
+          PERL_IMPLICIT_SYS.
+
+0.01    2026-09-10
+        - First version.
